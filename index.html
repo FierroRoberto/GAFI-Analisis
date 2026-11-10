@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>GAFI Ferrelectrico | Analizador Comercial</title>
+  <meta name="description" content="Analiza archivos de ventas y cartera vencida de GAFI Ferrelectrico: Pareto 80/20, clasificación, PDF ejecutivo y Excel. Procesamiento 100% local.">
+  <meta name="theme-color" content="#08080a">
+  <meta name="application-name" content="GAFI Analizador">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GAFI Analizador">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Tema guardado antes de pintar (evita parpadeo) -->
+  <script>
+    try { var t = localStorage.getItem('gafi-analizador-theme'); if (t) document.documentElement.dataset.theme = t; else if (matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme = 'light'; } catch (e) {}
+  </script>
+
+  <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css">
+  <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Excel (escritura con formato). La lectura usa SheetJS dentro de un Web Worker. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="grid-lines" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <div class="app">
+    <!-- ══ ENCABEZADO ══ -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-chip"><img src="assets/logo-gafi.png" alt="Logo GAFI" width="30" height="41"></div>
+        <div>
+          <div class="brand-name"><b>GAFI</b> Ferrelectrico</div>
+          <div class="brand-sub"><span class="status-dot" aria-hidden="true"></span>Analizador comercial · ventas y cartera</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn--ghost" id="newBtn" hidden><i class="fa-solid fa-rotate-left"></i><span class="hide-sm">Nuevo análisis</span></button>
+        <button class="btn" id="themeBtn" aria-label="Cambiar tema"><i class="fa-solid fa-sun"></i><span class="hide-sm">Modo claro</span></button>
+      </div>
+    </header>
+
+    <!-- ══ PASOS ══ -->
+    <nav class="stepper" aria-label="Progreso">
+      <div class="step is-active" data-step="1"><span class="dot">1</span><span class="txt">Tipo</span></div><span class="step-sep"></span>
+      <div class="step" data-step="2"><span class="dot">2</span><span class="txt">Archivo</span></div><span class="step-sep"></span>
+      <div class="step" data-step="3"><span class="dot">3</span><span class="txt">Configurar</span></div><span class="step-sep"></span>
+      <div class="step" data-step="4"><span class="dot">4</span><span class="txt">Resultados</span></div>
+    </nav>
+
+    <main>
+      <!-- ══ 1 · TIPO ══ -->
+      <section class="view is-active" data-view="1" aria-labelledby="t1">
+        <div class="eyebrow">Análisis 80/20 · Pareto</div>
+        <h1 class="hero-title" id="t1">¿Qué vamos a analizar hoy? <span>Sube tu Excel y listo.</span></h1>
+        <p class="hero-sub">El archivo se procesa en tu navegador: no se sube a ningún servidor. La app detecta el formato y genera el análisis, el PDF ejecutivo y el Excel.</p>
+        <div class="type-grid">
+          <button class="type-card" data-type="ventas" style="--i:0">
+            <span class="type-go" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+            <span class="type-icon"><i class="fa-solid fa-chart-column"></i></span>
+            <div class="type-title">Ventas</div>
+            <p class="type-desc">Caídas y crecimientos, Pareto 80/20, matriz de 9 categorías y plan de acción para las caídas relevantes.</p>
+            <ul class="type-list">
+              <li><i class="fa-solid fa-layer-group"></i>Cedis · Vendedor · Familia (comparativo de 2 años)</li>
+              <li><i class="fa-solid fa-boxes-stacked"></i>Reporte por familia (periodo y trimestre)</li>
+              <li><i class="fa-solid fa-users"></i>Vendedor · Cliente (clientes arriba de $12,000/mes)</li>
+            </ul>
+            <div class="type-out"><span class="chip chip--red"><i class="fa-solid fa-file-pdf"></i>PDF ejecutivo</span><span class="chip"><i class="fa-solid fa-file-excel"></i>Excel</span></div>
+          </button>
+          <button class="type-card type-card--cartera" data-type="cartera" style="--i:1">
+            <span class="type-go" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+            <span class="type-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+            <div class="type-title">Cartera vencida</div>
+            <p class="type-desc">Guía 80-20 de un CEDIS: clientes con deuda a más de 15 días, vendedores por monto y por número de clientes.</p>
+            <ul class="type-list">
+              <li><i class="fa-solid fa-table-list"></i>Resumen de todos los CEDIS (13 meses)</li>
+              <li><i class="fa-solid fa-user-tag"></i>Desplegado de clientes con corte Pareto en amarillo</li>
+              <li><i class="fa-solid fa-ranking-star"></i>Resumen de vencimiento por vendedor</li>
+            </ul>
+            <div class="type-out"><span class="chip"><i class="fa-solid fa-file-excel"></i>Cartera Vencida.xlsx</span></div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ══ 2 · ARCHIVO ══ -->
+      <section class="view" data-view="2" aria-labelledby="t2">
+        <div class="row-between">
+          <button class="back-link" id="backType"><i class="fa-solid fa-arrow-left"></i>Cambiar tipo</button>
+          <span class="chip chip--red"><i id="fileKindIcon" class="fa-solid fa-chart-column"></i><span id="fileKind">Ventas</span></span>
+        </div>
+        <h2 class="hero-title" id="t2" style="font-size:clamp(26px,3.6vw,40px);margin-top:14px">Sube tu archivo de Excel</h2>
+        <div class="drop" id="drop" role="button" tabindex="0" aria-label="Seleccionar o arrastrar archivo de Excel">
+          <div>
+            <div class="drop-icon" style="margin:0 auto 14px"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <h3>Arrastra el archivo aquí o haz clic para buscarlo</h3>
+            <p id="dropHint"></p>
+            <small>.xlsx · .xlsb · .xls · se procesa en tu equipo</small>
+          </div>
+          <input type="file" id="fileInput" hidden accept=".xlsx,.xls,.xlsm,.xlsb,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.ms-excel.sheet.binary.macroEnabled.12,application/octet-stream">
+        </div>
+      </section>
+
+      <!-- ══ 3 · CONFIGURAR ══ -->
+      <section class="view" data-view="3" aria-labelledby="detName">
+        <button class="back-link" id="backFile"><i class="fa-solid fa-arrow-left"></i>Cambiar archivo</button>
+        <div class="panel" style="margin-top:14px">
+          <div class="detect">
+            <div class="detect-icon"><i id="detIcon" class="fa-solid fa-chart-column"></i></div>
+            <div><h3 id="detName">—</h3><p id="detMeta"></p></div>
+            <span class="badge-ok"><i class="fa-solid fa-circle-check"></i>Formato reconocido</span>
+          </div>
+          <div class="cfg-grid" id="cfgFields"></div>
+          <ul class="rules" id="cfgRules"></ul>
+          <div class="cfg-actions"><button class="btn btn--primary" id="runBtn"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Generar análisis</span></button></div>
+        </div>
+      </section>
+
+      <!-- ══ 4 · RESULTADOS ══ -->
+      <section class="view" data-view="4" aria-labelledby="resTitle">
+        <div class="res-head">
+          <div>
+            <div class="eyebrow" id="resKicker"></div>
+            <h2 class="res-title" id="resTitle"></h2>
+            <div class="res-sub" id="resSub"></div>
+          </div>
+          <div class="res-actions">
+            <button class="btn btn--primary" id="pdfBtn"><i class="fa-solid fa-file-pdf"></i><span>Descargar PDF</span></button>
+            <button class="btn" id="xlsBtn"><i class="fa-solid fa-file-excel"></i><span>Descargar Excel</span></button>
+          </div>
+        </div>
+        <div id="results"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div><i class="fa-solid fa-shield-halved"></i>Procesamiento local · tus archivos no salen del navegador</div>
+      <div class="footer-credit">By GVR -RFA</div>
+      <div class="footer-right">GAFI Ferrelectrico · Simplificamos el mundo ferretero</div>
+    </footer>
+  </div>
+
+  <div class="loader" id="loader" role="status" aria-live="polite"><div class="loader-box"><div class="spinner"></div><div class="loader-text" id="loaderText">Procesando</div><div class="loader-sub" id="loaderSub"></div></div></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="js/app.bundle.js" defer></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      addEventListener('load', function () { navigator.serviceWorker.register('./sw.js').catch(function (e) { console.warn('[SW]', e); }); });
+    }
+  </script>
+</body>
+</html>
