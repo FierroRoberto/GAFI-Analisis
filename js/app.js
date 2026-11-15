@@ -162,7 +162,7 @@ function buildConfig() {
   } else {
     const ced = cedisList(p.data), ms = p.data.meses;
     fields = sel('cedis', 'CEDIS', ced.map((z) => [z, nice(z)]), ced.find((z) => /quer/i.test(z)) || ced[0]) + sel('mes', 'Mes de corte', ms.map((m) => [m, monthLong(m)]).reverse(), ms.at(-1));
-    r = ['"> 15 días", solo Mostradores (sin autoconsumo) y gestores CR01-CR02.', 'Vendedores "Casa" / "Ocasional" se mantienen en cartera.',
+    r = [`"> 15 días", gestores CR01-CR02 y sin autoconsumo (${p.data.criterio}).`, `Vendedor tomado de la columna "${p.data.vendedorCol}". Los vendedores "Casa" / "Ocasional" se mantienen en cartera.`,
       'Amarillo: hasta la fila cuyo Total está más cerca de 100%.', 'Se descarga como "Cartera Vencida.xlsx" con las hojas Resumen, Desplegado Clientes y Resumen Vencimiento.'];
   }
   f.innerHTML = fields;

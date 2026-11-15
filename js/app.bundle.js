@@ -273,22 +273,35 @@
       gestor: ix("Gestor"),
       v15: ix("> 15 d\xEDas"),
       c15: ix("Cliente + 15"),
-      mes: ix("Mes"),
-      tablero: ix("Tablero")
+      mes: ix("Mes")
     };
     const miss = Object.entries(C).filter(([, v]) => v < 0).map(([k]) => k);
     if (miss.length) throw new Error(`Faltan columnas en la hoja de antig\xFCedad: ${miss.join(", ")}.`);
+    const O = { tablero: ix("Tablero"), canal: ix("CANAL"), mercado: ix("Mercado"), vendAct: ix("Vendedor Actual") };
+    let esMostrador, criterio;
+    if (O.tablero >= 0) {
+      esMostrador = (row) => norm(row[O.tablero]) === "mostradores";
+      criterio = "Tablero = Mostradores";
+    } else if (O.canal >= 0) {
+      esMostrador = (row) => norm(row[O.canal]) === "mostrador";
+      criterio = "CANAL = Mostrador";
+    } else if (O.mercado >= 0) {
+      esMostrador = (row) => norm(row[O.mercado]) !== "autoconsumo";
+      criterio = "Mercado distinto de Autoconsumo";
+    } else throw new Error('La hoja de antig\xFCedad no tiene columna "CANAL" ni "Tablero" para separar el autoconsumo.');
+    const usaVendAct = O.vendAct >= 0;
     const recs = [];
     for (let r = h + 1; r < aoa.length; r++) {
       const row = aoa[r];
       if (!row) continue;
-      const tab = norm(row[C.tablero]), ges = String(row[C.gestor] ?? "").trim().toUpperCase();
-      if (tab !== "mostradores" || ges !== "CR01" && ges !== "CR02") continue;
+      const ges = String(row[C.gestor] ?? "").trim().toUpperCase();
+      if (ges !== "CR01" && ges !== "CR02" || !esMostrador(row)) continue;
       const d = excelSerialToDate(row[C.mes]);
       if (!d) continue;
+      const vAct = usaVendAct ? String(row[O.vendAct] ?? "").trim() : "";
       recs.push({
         zona: String(row[C.zona] ?? "").trim(),
-        vend: String(row[C.vend] ?? "").trim(),
+        vend: vAct || String(row[C.vend] ?? "").trim(),
         cve: String(row[C.cve] ?? "").trim(),
         cli: String(row[C.cli] ?? "").trim(),
         saldo: num(row[C.saldo]) || 0,
@@ -297,10 +310,10 @@
         mes: monthKey(d)
       });
     }
-    if (!recs.length) throw new Error("No hay renglones de Mostradores CR01-CR02 en la hoja de antig\xFCedad.");
+    if (!recs.length) throw new Error("No hay renglones de mostrador con gestor CR01-CR02 en la hoja de antig\xFCedad.");
     const meses = [...new Set(recs.map((r) => r.mes))].sort();
     const zonas = [...new Set(recs.map((r) => r.zona))].filter(Boolean).sort((a, b) => a.localeCompare(b, "es"));
-    return { scenario: "cartera", data: { recs, meses, zonas, total: aoa.length - h - 1 } };
+    return { scenario: "cartera", data: { recs, meses, zonas, total: aoa.length - h - 1, criterio, vendedorCol: usaVendAct ? "Vendedor Actual" : "Vendedor" } };
   }
 
   // js/core/solutions.js
@@ -2420,8 +2433,8 @@
       const ced = cedisList(p.data), ms = p.data.meses;
       fields = sel("cedis", "CEDIS", ced.map((z) => [z, nice(z)]), ced.find((z) => /quer/i.test(z)) || ced[0]) + sel("mes", "Mes de corte", ms.map((m) => [m, monthLong(m)]).reverse(), ms.at(-1));
       r = [
-        '"> 15 d\xEDas", solo Mostradores (sin autoconsumo) y gestores CR01-CR02.',
-        'Vendedores "Casa" / "Ocasional" se mantienen en cartera.',
+        `"> 15 d\xEDas", gestores CR01-CR02 y sin autoconsumo (${p.data.criterio}).`,
+        `Vendedor tomado de la columna "${p.data.vendedorCol}". Los vendedores "Casa" / "Ocasional" se mantienen en cartera.`,
         "Amarillo: hasta la fila cuyo Total est\xE1 m\xE1s cerca de 100%.",
         'Se descarga como "Cartera Vencida.xlsx" con las hojas Resumen, Desplegado Clientes y Resumen Vencimiento.'
       ];
