@@ -1,6 +1,7 @@
 /* ==========================================================================
    Escenario 4 · Cartera vencida > 15 días → Guía 80-20 de un CEDIS
-   Reglas: Mostradores (sin autoconsumo), Gestor CR01-CR02, vendedores casa/ocasional SE MANTIENEN.
+   Reglas: canal mostrador (Tablero = Mostradores en el formato anterior; CANAL = Mostrador en el formato 2026),
+   Gestor CR01-CR02, vendedor = "Vendedor Actual" cuando existe; vendedores casa/ocasional SE MANTIENEN.
    Amarillo: desde la primera fila hasta la fila cuyo "Total" está más cerca de 100 % (incluida).
    ========================================================================== */
 import { sum, groupBy } from './utils.js';

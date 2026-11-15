@@ -8,7 +8,8 @@
 (function (root) {
   'use strict';
   var norm = function (s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); };
-  var CARTERA_COLS = ['zona', 'vendedor', 'cve cte', 'cliente', 'saldo', 'gestor', '> 15 dias', 'cliente + 15', 'mes', 'tablero'];
+  /* 'tablero' viene en el formato anterior; 'canal', 'mercado' y 'vendedor actual' en el formato 2026 (son opcionales). */
+  var CARTERA_COLS = ['zona', 'vendedor', 'cve cte', 'cliente', 'saldo', 'gestor', '> 15 dias', 'cliente + 15', 'mes', 'tablero', 'canal', 'mercado', 'vendedor actual'];
 
   function read(buf, progress) {
     progress = progress || function () {};

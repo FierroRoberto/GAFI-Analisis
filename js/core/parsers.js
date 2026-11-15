@@ -105,22 +105,33 @@ export function parseCartera(aoa) {
   const head = aoa[h].map(norm);
   const ix = (name) => head.indexOf(norm(name));
   const C = { zona: ix('Zona'), vend: ix('Vendedor'), cve: ix('Cve Cte'), cli: ix('Cliente'), saldo: ix('Saldo'), gestor: ix('Gestor'),
-    v15: ix('> 15 días'), c15: ix('Cliente + 15'), mes: ix('Mes'), tablero: ix('Tablero') };
+    v15: ix('> 15 días'), c15: ix('Cliente + 15'), mes: ix('Mes') };
   const miss = Object.entries(C).filter(([, v]) => v < 0).map(([k]) => k);
   if (miss.length) throw new Error(`Faltan columnas en la hoja de antigüedad: ${miss.join(', ')}.`);
+  /* Columnas que cambian según la versión del archivo:
+     - Formato anterior: "Tablero" (Mostradores / Autoconsumo).
+     - Formato 2026: "CANAL" (Mostrador / Autoconsum / Mayoreo / GAFI) y "Vendedor Actual". */
+  const O = { tablero: ix('Tablero'), canal: ix('CANAL'), mercado: ix('Mercado'), vendAct: ix('Vendedor Actual') };
+  let esMostrador, criterio;
+  if (O.tablero >= 0) { esMostrador = (row) => norm(row[O.tablero]) === 'mostradores'; criterio = 'Tablero = Mostradores'; }
+  else if (O.canal >= 0) { esMostrador = (row) => norm(row[O.canal]) === 'mostrador'; criterio = 'CANAL = Mostrador'; }
+  else if (O.mercado >= 0) { esMostrador = (row) => norm(row[O.mercado]) !== 'autoconsumo'; criterio = 'Mercado distinto de Autoconsumo'; }
+  else throw new Error('La hoja de antigüedad no tiene columna "CANAL" ni "Tablero" para separar el autoconsumo.');
+  const usaVendAct = O.vendAct >= 0;
   const recs = [];
   for (let r = h + 1; r < aoa.length; r++) {
     const row = aoa[r];
     if (!row) continue;
-    const tab = norm(row[C.tablero]), ges = String(row[C.gestor] ?? '').trim().toUpperCase();
-    if (tab !== 'mostradores' || (ges !== 'CR01' && ges !== 'CR02')) continue; // sin autoconsumo, solo CR01-CR02
+    const ges = String(row[C.gestor] ?? '').trim().toUpperCase();
+    if ((ges !== 'CR01' && ges !== 'CR02') || !esMostrador(row)) continue; // solo CR01-CR02 y canal mostrador
     const d = excelSerialToDate(row[C.mes]);
     if (!d) continue;
-    recs.push({ zona: String(row[C.zona] ?? '').trim(), vend: String(row[C.vend] ?? '').trim(), cve: String(row[C.cve] ?? '').trim(),
+    const vAct = usaVendAct ? String(row[O.vendAct] ?? '').trim() : '';
+    recs.push({ zona: String(row[C.zona] ?? '').trim(), vend: vAct || String(row[C.vend] ?? '').trim(), cve: String(row[C.cve] ?? '').trim(),
       cli: String(row[C.cli] ?? '').trim(), saldo: num(row[C.saldo]) || 0, v15: num(row[C.v15]) || 0, c15: num(row[C.c15]) || 0, mes: monthKey(d) });
   }
-  if (!recs.length) throw new Error('No hay renglones de Mostradores CR01-CR02 en la hoja de antigüedad.');
+  if (!recs.length) throw new Error('No hay renglones de mostrador con gestor CR01-CR02 en la hoja de antigüedad.');
   const meses = [...new Set(recs.map((r) => r.mes))].sort();
   const zonas = [...new Set(recs.map((r) => r.zona))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'es'));
-  return { scenario: 'cartera', data: { recs, meses, zonas, total: aoa.length - h - 1 } };
+  return { scenario: 'cartera', data: { recs, meses, zonas, total: aoa.length - h - 1, criterio, vendedorCol: usaVendAct ? 'Vendedor Actual' : 'Vendedor' } };
 }
