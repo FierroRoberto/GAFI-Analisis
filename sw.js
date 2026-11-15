@@ -1,7 +1,7 @@
 /* GAFI Analizador · Service Worker
    - App shell: precache (cache-first, se renueva al cambiar VERSION)
    - Librerías CDN (SheetJS, ExcelJS, jsPDF, html2canvas): stale-while-revalidate */
-const VERSION = 'gafi-analizador-v1.1.1';
+const VERSION = 'gafi-analizador-v1.2.0';
 const SHELL = [
   './', './index.html', './manifest.json', './css/styles.css',
   './js/app.bundle.js', './js/core/reader.worker.js', './js/core/read-core.js',

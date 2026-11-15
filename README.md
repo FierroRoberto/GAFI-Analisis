@@ -19,7 +19,7 @@ La app **detecta el formato sola**; si eliges "Ventas" y subes una cartera (o al
 - Pareto 80/20 por impacto absoluto en pesos; plan de acción (3–5 soluciones) solo para Caída Libre, Alerta Roja, Alerta Amarilla y Suelo con impacto negativo.
 - **Ventas:** se excluyen los vendedores con "Casa" u "Ocasional" en el nombre (interruptor en la configuración).
 - **Clientes:** umbral mensual configurable (por defecto $12,000 con 10 meses); "Público en general" cuenta como 1 cliente.
-- **Cartera vencida:** columna "> 15 días", solo Mostradores (sin autoconsumo) y gestores CR01-CR02. Los vendedores Casa/Ocasional **se mantienen**. El amarillo va desde la primera fila hasta la fila cuyo **Total está más cerca de 100 %**, por separado en cada tabla.
+- **Cartera vencida:** columna "> 15 días", gestores CR01-CR02 y sin autoconsumo. La app reconoce las dos versiones del archivo: la anterior (columna `Tablero` = Mostradores) y la de 2026 (columna `CANAL` = Mostrador, que deja fuera Autoconsumo, Mayoreo y GAFI). Si existe la columna `Vendedor Actual`, la deuda se asigna a ese vendedor; si no, a `Vendedor`. Los vendedores Casa/Ocasional **se mantienen**. El amarillo va desde la primera fila hasta la fila cuyo **Total está más cerca de 100 %**, por separado en cada tabla.
 - PDF con logo y nombre **GAFI Ferrelectrico** en cada página.
 
 ## Publicar en GitHub Pages
